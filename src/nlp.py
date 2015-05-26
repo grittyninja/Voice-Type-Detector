@@ -12,6 +12,7 @@ class Nlp():
     def __init__(self,master):
         self.recordBtn = PhotoImage(file='mic.gif')
         self.stopBtn = PhotoImage(file='stop.gif')
+        self.reloadBtn = PhotoImage(file='reload.gif')
         self.status = False
         self.recordTrigger = Button(main,image=self.recordBtn)
         self.recordTrigger.image=self.recordBtn
@@ -23,6 +24,7 @@ class Nlp():
         self.recordTrigger.bind("<Button-1>", self.Rekam)
 
     def Rekam(self, event):
+        #Event OnRecord
         self.recordTrigger.config(image=self.stopBtn)
         self.recordTrigger.image=self.stopBtn
         self.stateLabel.config(text='Recording ...')
@@ -40,11 +42,11 @@ class Nlp():
         t.start()
         
     def Berhenti(self, event):
+        # Event OnStop
         self.status = False
         self.recordTrigger.config(image=self.recordBtn)
         self.recordTrigger.image=self.recordBtn
         self.recordTrigger.bind("<Button-1>", self.Void)
-        self.recordTrigger.config(state=DISABLED)
         self.stream.stop_stream()
         self.stream.close()
         self.p.terminate()
@@ -73,6 +75,7 @@ class Nlp():
         trimmed_sound.export("output.wav", format="wav")
 
     def play_(self):
+        #Playing Recorded Voice
         wf = wave.open('output.wav', 'rb')
         chunk = 2048
         swidth = wf.getsampwidth()
@@ -102,6 +105,7 @@ class Nlp():
         
 
     def olahFrequency(self,thefreq):
+        # Comparing Data Testing with Data Training
         def dist(x1, x2, y1, y2):
             return np.sqrt(np.sum((x1 - x2) ** 2 + (y1 - y2) ** 2))
 
@@ -142,14 +146,15 @@ class Nlp():
             self.stateLabel.config(text='Voice Type : Tenor')
         elif ind == 3:
             self.stateLabel.config(text='Voice Type : Bass')
-        self.recordTrigger.config(state=NORMAL)
-        sleep(3)
+        self.recordTrigger.config(image=self.reloadBtn)
+        self.recordTrigger.image=self.reloadBtn
         self.recordTrigger.bind("<Button-1>", self.loop)
 
 
     def loop(self,event):
         self.freqLabel.destroy()
         self.__init__(main)
+        
     def process(self):
         self.sr_()
         self.play_()
@@ -159,10 +164,20 @@ class Nlp():
     
     def _Rekam(self):
         self.frames = []
+        itt = 'one'
         while self.status:
             self.data = self.stream.read(self.CHUNK)
             self.frames.append(self.data)
             print("Recording")
+            if itt=='one':
+                self.stateLabel.config(text='Recording .')
+                itt='two'
+            elif itt=='two':
+                self.stateLabel.config(text='Recording ..')
+                itt='three'
+            elif itt=='three':
+                self.stateLabel.config(text='Recording ...')
+                itt='one'
 
 main = Tk()
 nlp = Nlp(main)
