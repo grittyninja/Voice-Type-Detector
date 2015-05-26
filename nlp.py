@@ -9,7 +9,7 @@ import threading as tr
 from time import sleep
 
 class Nlp():
-    def __init__(self, master):
+    def __init__(self,master):
         self.recordBtn = PhotoImage(file='mic.gif')
         self.stopBtn = PhotoImage(file='stop.gif')
         self.status = False
@@ -38,7 +38,7 @@ class Nlp():
         self.status = True
         t = tr.Thread(target=self._Rekam)
         t.start()
-
+        
     def Berhenti(self, event):
         self.status = False
         self.recordTrigger.config(image=self.recordBtn)
@@ -142,7 +142,14 @@ class Nlp():
             self.stateLabel.config(text='Voice Type : Tenor')
         elif ind == 3:
             self.stateLabel.config(text='Voice Type : Bass')
-            
+        self.recordTrigger.config(state=NORMAL)
+        sleep(3)
+        self.recordTrigger.bind("<Button-1>", self.loop)
+
+
+    def loop(self,event):
+        self.freqLabel.destroy()
+        self.__init__(main)
     def process(self):
         self.sr_()
         self.play_()
