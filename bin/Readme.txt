@@ -1,0 +1,1 @@
+This binary compiled using py2exe package (Python 3)
