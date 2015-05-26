@@ -6,7 +6,6 @@ import wave
 import numpy as np
 from pydub import AudioSegment
 import threading as tr
-from time import sleep
 
 class Nlp():
     def __init__(self,master):
@@ -24,7 +23,6 @@ class Nlp():
         self.recordTrigger.bind("<Button-1>", self.Rekam)
 
     def Rekam(self, event):
-        #Event OnRecord
         self.recordTrigger.config(image=self.stopBtn)
         self.recordTrigger.image=self.stopBtn
         self.stateLabel.config(text='Recording ...')
@@ -42,7 +40,6 @@ class Nlp():
         t.start()
         
     def Berhenti(self, event):
-        # Event OnStop
         self.status = False
         self.recordTrigger.config(image=self.recordBtn)
         self.recordTrigger.image=self.recordBtn
@@ -75,7 +72,6 @@ class Nlp():
         trimmed_sound.export("output.wav", format="wav")
 
     def play_(self):
-        #Playing Recorded Voice
         wf = wave.open('output.wav', 'rb')
         chunk = 2048
         swidth = wf.getsampwidth()
@@ -101,11 +97,11 @@ class Nlp():
             stream.write(data)
         stream.close()
         p.terminate()
+        self.stateLabel.destroy()
         self.olahFrequency(thefreq)
         
 
     def olahFrequency(self,thefreq):
-        # Comparing Data Testing with Data Training
         def dist(x1, x2, y1, y2):
             return np.sqrt(np.sum((x1 - x2) ** 2 + (y1 - y2) ** 2))
 
@@ -138,14 +134,17 @@ class Nlp():
             x += 1
         self.freqLabel.config(text="Min Frequency : " + str("{0:.2f}".format(min(thefreq))) + "\nMax Frequency : " + str("{0:.2f}".format(second_largest(thefreq))))
         ind = dist_arr.index(min(dist_arr))
+        self.stateLabel_ = Label(main,text="",font=("Helvetica", 24),padx=80,bg='#3498db',fg='white')
+        self.stateLabel_.grid(row=1,column=2)
         if ind == 0:
-            self.stateLabel.config(text='Voice Type : Sopran')
+            self.stateLabel_.config(text='Voice Type : Sopran')
         elif ind == 1:
-            self.stateLabel.config(text='Voice Type : Alto')
+            self.stateLabel_.config(text='Voice Type : Alto')
         elif ind == 2:
-            self.stateLabel.config(text='Voice Type : Tenor')
+            self.stateLabel_.config(text='Voice Type : Tenor')
         elif ind == 3:
-            self.stateLabel.config(text='Voice Type : Bass')
+            self.stateLabel_.config(text='Voice Type : Bass')
+
         self.recordTrigger.config(image=self.reloadBtn)
         self.recordTrigger.image=self.reloadBtn
         self.recordTrigger.bind("<Button-1>", self.loop)
@@ -153,8 +152,8 @@ class Nlp():
 
     def loop(self,event):
         self.freqLabel.destroy()
+        self.stateLabel_.destroy()
         self.__init__(main)
-        
     def process(self):
         self.sr_()
         self.play_()
@@ -164,20 +163,20 @@ class Nlp():
     
     def _Rekam(self):
         self.frames = []
-        itt = 'one'
+        init_ = 'one'
         while self.status:
+            if init_ == 'one':
+                self.stateLabel.config(text='Recording .')
+                init_ = 'two'
+            elif init_ == 'two':
+                self.stateLabel.config(text='Recording ..')
+                init_ = 'three'
+            else:
+                self.stateLabel.config(text='Recording ...')
+                init_ = 'one'
             self.data = self.stream.read(self.CHUNK)
             self.frames.append(self.data)
-            print("Recording")
-            if itt=='one':
-                self.stateLabel.config(text='Recording .')
-                itt='two'
-            elif itt=='two':
-                self.stateLabel.config(text='Recording ..')
-                itt='three'
-            elif itt=='three':
-                self.stateLabel.config(text='Recording ...')
-                itt='one'
+        self.stateLabel.config(text='Processing ...')
 
 main = Tk()
 nlp = Nlp(main)
