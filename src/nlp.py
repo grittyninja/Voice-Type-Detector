@@ -37,7 +37,10 @@ class Nlp():
         self.recordTrigger.bind("<Button-1>", self.Berhenti)
         self.status = True
         t = tr.Thread(target=self._Rekam)
-        t.start()
+        try:
+            t.start()
+        except TclError:
+            pass
         
     def Berhenti(self, event):
         self.status = False
@@ -71,18 +74,15 @@ class Nlp():
         trimmed_sound = sound[start_trim:duration - end_trim]
         trimmed_sound.export("output.wav", format="wav")
 
-    def play_(self):
+    def proc_(self):
         wf = wave.open('output.wav', 'rb')
         chunk = 2048
         swidth = wf.getsampwidth()
         RATE = wf.getframerate()
         window = np.blackman(chunk)
-        p = pyaudio.PyAudio()
-        stream = p.open(format=p.get_format_from_width(wf.getsampwidth()), channels=wf.getnchannels(), rate=RATE, output=True)
         data = wf.readframes(chunk)
         thefreq = []
         while len(data) == chunk * swidth:
-            stream.write(data)
             indata = np.array(wave.struct.unpack("%dh" % (len(data) / swidth), data)) * window
             fftData = abs(np.fft.rfft(indata)) ** 2
             which = fftData[1:].argmax() + 1
@@ -93,15 +93,12 @@ class Nlp():
             else:
                 thefreq.append(which * RATE / chunk)
             data = wf.readframes(chunk)
-        if data:
-            stream.write(data)
-        stream.close()
-        p.terminate()
         self.stateLabel.destroy()
         self.olahFrequency(thefreq)
         
 
     def olahFrequency(self,thefreq):
+        print(thefreq)
         def dist(x1, x2, y1, y2):
             return np.sqrt(np.sum((x1 - x2) ** 2 + (y1 - y2) ** 2))
 
@@ -125,13 +122,16 @@ class Nlp():
                 elif x < m2:
                     m2 = x
             return m2
+        
         min_range = [783, 349, 348, 97]
         max_range = [2086, 887, 1318, 1103]
         dist_arr = []
+        
         for x in range(0, 4):
             temp = dist(min_range[x], min(thefreq), max_range[x], second_largest(thefreq))
             dist_arr.append(temp)
             x += 1
+
         self.freqLabel.config(text="Min Frequency : " + str("{0:.2f}".format(min(thefreq))) + "\nMax Frequency : " + str("{0:.2f}".format(second_largest(thefreq))))
         ind = dist_arr.index(min(dist_arr))
         self.stateLabel_ = Label(main,text="",font=("Helvetica", 24),padx=80,bg='#3498db',fg='white')
@@ -153,10 +153,11 @@ class Nlp():
     def loop(self,event):
         self.freqLabel.destroy()
         self.stateLabel_.destroy()
-        self.__init__(main)
+        self.__init__(main
+                      )
     def process(self):
         self.sr_()
-        self.play_()
+        self.proc_()
         
     def Void(self,event):
         pass
@@ -176,7 +177,7 @@ class Nlp():
                 init_ = 'one'
             self.data = self.stream.read(self.CHUNK)
             self.frames.append(self.data)
-        self.stateLabel.config(text='Processing ...')
+
 
 main = Tk()
 nlp = Nlp(main)
